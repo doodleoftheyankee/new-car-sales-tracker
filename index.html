@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buick GMC Sales Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        const { useState, useEffect, createElement: e } = React;
+        
+        // Icon components
+        const Plus = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('path', { d: "M5 12h14" }), e('path', { d: "M12 5v14" }));
+        const Download = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('path', { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }), e('polyline', { points: "7,10 12,15 17,10" }), e('line', { x1: "12", x2: "12", y1: "15", y2: "3" }));
+        const Archive = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('rect', { width: "20", height: "5", x: "2", y: "3", rx: "1" }), e('path', { d: "m4 8 16 0v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z" }), e('path', { d: "m10 12 4 0" }));
+        const DollarSign = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('line', { x1: "12", x2: "12", y1: "2", y2: "22" }), e('path', { d: "M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" }));
+        const Car = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('path', { d: "M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18.4 10H5.6L3.5 11.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2" }), e('circle', { cx: "7", cy: "17", r: "2" }), e('path', { d: "M9 17h6" }), e('circle', { cx: "17", cy: "17", r: "2" }));
+        const Users = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('path', { d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" }), e('circle', { cx: "9", cy: "7", r: "4" }), e('path', { d: "m22 21-2-2a4 4 0 0 0-3-1 4 4 0 0 0-3 1l-2 2" }));
+        const Search = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('circle', { cx: "11", cy: "11", r: "8" }), e('path', { d: "m21 21-4.35-4.35" }));
+        const Edit2 = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('path', { d: "M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" }), e('path', { d: "m15 5 4 4" }));
+        const Trash2 = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('path', { d: "M3 6h18" }), e('path', { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" }), e('path', { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" }), e('line', { x1: "10", x2: "10", y1: "11", y2: "17" }), e('line', { x1: "14", x2: "14", y1: "11", y2: "17" }));
+
+        const BuickGMCSalesTracker = () => {
+            const [currentView, setCurrentView] = useState('dashboard');
+            const [salesData, setSalesData] = useState([]);
+            const [archivedData, setArchivedData] = useState({});
+            const [showAddForm, setShowAddForm] = useState(false);
+            const [editingDeal, setEditingDeal] = useState(null);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7));
+
+            // Load data from localStorage on component mount
+            useEffect(() => {
+                const savedSales = localStorage.getItem('buickGmcSales');
+                const savedArchived = localStorage.getItem('buickGmcArchived');
+                
+                if (savedSales) {
+                    setSalesData(JSON.parse(savedSales));
+                }
+                if (savedArchived) {
+                    setArchivedData(JSON.parse(savedArchived));
+                }
+            }, []);
+
+            // Save data to localStorage whenever salesData or archivedData changes
+            useEffect(() => {
+                localStorage.setItem('buickGmcSales', JSON.stringify(salesData));
+            }, [salesData]);
+
+            useEffect(() => {
+                localStorage.setItem('buickGmcArchived', JSON.stringify(archivedData));
+            }, [archivedData]);
+
+            const [formData, setFormData] = useState({
+                date: new Date().toISOString().slice(0, 10),
+                dealNumber: '',
+                make: 'Buick',
+                model: '',
+                year: new Date().getFullYear(),
+                customerName: '',
+                leadType: 'Walk-in',
+                salesPerson: '',
+                tradeIn: false,
+                tradeInValue: 0,
+                salePrice: 0,
+                frontEndProfit: 0,
+                backEndProfit: 0,
+                financing: false,
+                warranty: false,
+                insurance: false,
+                notes: ''
+            });
+
+            const resetForm = () => {
+                setFormData({
+                    date: new Date().toISOString().slice(0, 10),
+                    dealNumber: '',
+                    make: 'Buick',
+                    model: '',
+                    year: new Date().getFullYear(),
+                    customerName: '',
+                    leadType: 'Walk-in',
+                    salesPerson: '',
+                    tradeIn: false,
+                    tradeInValue: 0,
+                    salePrice: 0,
+                    frontEndProfit: 0,
+                    backEndProfit: 0,
+                    financing: false,
+                    warranty: false,
+                    insurance: false,
+                    notes: ''
+                });
+                setEditingDeal(null);
+            };
+
+            const handleSubmit = () => {
+                const dealData = {
+                    ...formData,
+                    id: editingDeal ? editingDeal.id : Date.now(),
+                    totalProfit: parseFloat(formData.frontEndProfit) + parseFloat(formData.backEndProfit),
+                    createdAt: editingDeal ? editingDeal.createdAt : new Date().toISOString()
+                };
+
+                if (editingDeal) {
+                    setSalesData(prev => prev.map(deal => deal.id === editingDeal.id ? dealData : deal));
+                } else {
+                    setSalesData(prev => [...prev, dealData]);
+                }
+                
+                resetForm();
+                setShowAddForm(false);
+            };
+
+            const handleEdit = (deal) => {
+                setFormData(deal);
+                setEditingDeal(deal);
+                setShowAddForm(true);
+            };
+
+            const handleDelete = (dealId) => {
+                if (window.confirm('Are you sure you want to delete this deal?')) {
+                    setSalesData(prev => prev.filter(deal => deal.id !== dealId));
+                }
+            };
+
+            const archiveMonth = (monthYear) => {
+                const [year, month] = monthYear.split('-');
+                const monthData = salesData.filter(deal => {
+                    const dealDate = new Date(deal.date);
+                    return dealDate.getFullYear() === parseInt(year) && 
+                           dealDate.getMonth() === parseInt(month) - 1;
+                });
+                
+                if (monthData.length > 0) {
+                    setArchivedData(prev => ({
+                        ...prev,
+                        [monthYear]: monthData
+                    }));
+                    
+                    setSalesData(prev => prev.filter(deal => {
+                        const dealDate = new Date(deal.date);
+                        return !(dealDate.getFullYear() === parseInt(year) && 
+                                dealDate.getMonth() === parseInt(month) - 1);
+                    }));
+                    
+                    alert(`Archived ${monthData.length} deals from ${monthYear}`);
+                } else {
+                    alert('No deals found for this month');
+                }
+            };
+
+            const exportToCSV = (data, filename) => {
+                const headers = [
+                    'Date', 'Deal Number', 'Make', 'Model', 'Year', 'Customer Name', 
+                    'Lead Type', 'Sales Person', 'Trade In', 'Trade In Value', 
+                    'Sale Price', 'Front End Profit', 'Back End Profit', 'Total Profit',
+                    'Financing', 'Warranty', 'Insurance', 'Notes'
+                ];
+                
+                const csvContent = [
+                    headers.join(','),
+                    ...data.map(deal => [
+                        deal.date,
+                        deal.dealNumber,
+                        deal.make,
+                        deal.model,
+                        deal.year,
+                        `"${deal.customerName}"`,
+                        deal.leadType,
+                        `"${deal.salesPerson}"`,
+                        deal.tradeIn ? 'Yes' : 'No',
+                        deal.tradeInValue,
+                        deal.salePrice,
+                        deal.frontEndProfit,
+                        deal.backEndProfit,
+                        deal.totalProfit,
+                        deal.financing ? 'Yes' : 'No',
+                        deal.warranty ? 'Yes' : 'No',
+                        deal.insurance ? 'Yes' : 'No',
+                        `"${deal.notes || ''}"`
+                    ].join(','))
+                ].join('\n');
+                
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.click();
+                URL.revokeObjectURL(url);
+            };
+
+            const filteredSales = salesData.filter(deal => {
+                const matchesSearch = searchTerm === '' || 
+                    deal.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    deal.dealNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    deal.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    deal.salesPerson.toLowerCase().includes(searchTerm.toLowerCase());
+                
+                const matchesMonth = filterMonth === '' || deal.date.startsWith(filterMonth);
+                
+                return matchesSearch && matchesMonth;
+            });
+
+            const currentMonthSales = salesData.filter(deal => 
+                deal.date.startsWith(new Date().toISOString().slice(0, 7))
+            );
+
+            const totalSales = currentMonthSales.length;
+            const totalRevenue = currentMonthSales.reduce((sum, deal) => sum + parseFloat(deal.salePrice || 0), 0);
+            const totalProfit = currentMonthSales.reduce((sum, deal) => sum + parseFloat(deal.totalProfit || 0), 0);
+            const buickSales = currentMonthSales.filter(deal => deal.make === 'Buick').length;
+            const gmcSales = currentMonthSales.filter(deal => deal.make === 'GMC').length;
+
+            const DashboardView = () => e('div', { className: 'space-y-6' },
+                e('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4' },
+                    e('div', { className: 'bg-blue-50 p-6 rounded-lg border border-blue-200' },
+                        e('div', { className: 'flex items-center justify-between' },
+                            e('div', {},
+                                e('p', { className: 'text-sm font-medium text-blue-600' }, 'Total Sales This Month'),
+                                e('p', { className: 'text-2xl font-bold text-blue-900' }, totalSales)
+                            ),
+                            e(Car, { className: 'h-8 w-8 text-blue-600' })
+                        )
+                    ),
+                    
+                    e('div', { className: 'bg-green-50 p-6 rounded-lg border border-green-200' },
+                        e('div', { className: 'flex items-center justify-between' },
+                            e('div', {},
+                                e('p', { className: 'text-sm font-medium text-green-600' }, 'Total Revenue'),
+                                e('p', { className: 'text-2xl font-bold text-green-900' }, `$${totalRevenue.toLocaleString()}`)
+                            ),
+                            e(DollarSign, { className: 'h-8 w-8 text-green-600' })
+                        )
+                    ),
+                    
+                    e('div', { className: 'bg-purple-50 p-6 rounded-lg border border-purple-200' },
+                        e('div', { className: 'flex items-center justify-between' },
+                            e('div', {},
+                                e('p', { className: 'text-sm font-medium text-purple-600' }, 'Total Profit'),
+                                e('p', { className: 'text-2xl font-bold text-purple-900' }, `$${totalProfit.toLocaleString()}`)
+                            ),
+                            e(DollarSign, { className: 'h-8 w-8 text-purple-600' })
+                        )
+                    ),
+                    
+                    e('div', { className: 'bg-orange-50 p-6 rounded-lg border border-orange-200' },
+                        e('div', { className: 'flex items-center justify-between' },
+                            e('div', {},
+                                e('p', { className: 'text-sm font-medium text-orange-600' }, 'Buick / GMC'),
+                                e('p', { className: 'text-2xl font-bold text-orange-900' }, `${buickSales} / ${gmcSales}`)
+                            ),
+                            e(Users, { className: 'h-8 w-8 text-orange-600' })
+                        )
+                    )
+                ),
+
+                e('div', { className: 'bg-white p-6 rounded-lg border' },
+                    e('h3', { className: 'text-lg font-semibold mb-4' }, 'Recent Sales'),
+                    e('div', { className: 'overflow-x-auto' },
+                        e('table', { className: 'w-full text-sm' },
+                            e('thead', {},
+                                e('tr', { className: 'border-b' },
+                                    e('th', { className: 'text-left p-2' }, 'Date'),
+                                    e('th', { className: 'text-left p-2' }, 'Deal #'),
+                                    e('th', { className: 'text-left p-2' }, 'Customer'),
+                                    e('th', { className: 'text-left p-2' }, 'Vehicle'),
+                                    e('th', { className: 'text-left p-2' }, 'Sales Person'),
+                                    e('th', { className: 'text-left p-2' }, 'Profit')
+                                )
+                            ),
+                            e('tbody', {},
+                                currentMonthSales.slice(0, 5).map(deal =>
+                                    e('tr', { key: deal.id, className: 'border-b' },
+                                        e('td', { className: 'p-2' }, new Date(deal.date).toLocaleDateString()),
+                                        e('td', { className: 'p-2' }, deal.dealNumber),
+                                        e('td', { className: 'p-2' }, deal.customerName),
+                                        e('td', { className: 'p-2' }, `${deal.year} ${deal.make} ${deal.model}`),
+                                        e('td', { className: 'p-2' }, deal.salesPerson),
+                                        e('td', { className: 'p-2' }, `$${deal.totalProfit}`)
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+
+            const SalesView = () => e('div', { className: 'space-y-6' },
+                e('div', { className: 'flex flex-col sm:flex-row gap-4 items-center justify-between' },
+                    e('h2', { className: 'text-xl font-semibold' }, 'Sales Management'),
+                    e('button', {
+                        onClick: () => setShowAddForm(true),
+                        className: 'bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700'
+                    },
+                        e(Plus, { className: 'h-4 w-4' }),
+                        'Add New Deal'
+                    )
+                ),
+
+                e('div', { className: 'flex flex-col sm:flex-row gap-4' },
+                    e('div', { className: 'relative flex-1' },
+                        e(Search, { className: 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' }),
+                        e('input', {
+                            type: 'text',
+                            placeholder: 'Search deals...',
+                            value: searchTerm,
+                            onChange: (e) => setSearchTerm(e.target.value),
+                            className: 'w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                        })
+                    ),
+                    e('input', {
+                        type: 'month',
+                        value: filterMonth,
+                        onChange: (e) => setFilterMonth(e.target.value),
+                        className: 'px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    }),
+                    e('button', {
+                        onClick: () => exportToCSV(filteredSales, `sales-${filterMonth || 'all'}.csv`),
+                        className: 'bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700'
+                    },
+                        e(Download, { className: 'h-4 w-4' }),
+                        'Export'
+                    )
+                ),
+
+                e('div', { className: 'bg-white rounded-lg border overflow-hidden' },
+                    e('div', { className: 'overflow-x-auto' },
+                        e('table', { className: 'w-full text-sm' },
+                            e('thead', { className: 'bg-gray-50' },
+                                e('tr', {},
+                                    e('th', { className: 'text-left p-3' }, 'Date'),
+                                    e('th', { className: 'text-left p-3' }, 'Deal #'),
+                                    e('th', { className: 'text-left p-3' }, 'Customer'),
+                                    e('th', { className: 'text-left p-3' }, 'Vehicle'),
+                                    e('th', { className: 'text-left p-3' }, 'Sales Person'),
+                                    e('th', { className: 'text-left p-3' }, 'Sale Price'),
+                                    e('th', { className: 'text-left p-3' }, 'Profit'),
+                                    e('th', { className: 'text-left p-3' }, 'Actions')
+                                )
+                            ),
+                            e('tbody', {},
+                                filteredSales.map(deal =>
+                                    e('tr', { key: deal.id, className: 'border-b hover:bg-gray-50' },
+                                        e('td', { className: 'p-3' }, new Date(deal.date).toLocaleDateString()),
+                                        e('td', { className: 'p-3' }, deal.dealNumber),
+                                        e('td', { className: 'p-3' }, deal.customerName),
+                                        e('td', { className: 'p-3' }, `${deal.year} ${deal.make} ${deal.model}`),
+                                        e('td', { className: 'p-3' }, deal.salesPerson),
+                                        e('td', { className: 'p-3' }, `$${parseFloat(deal.salePrice || 0).toLocaleString()}`),
+                                        e('td', { className: 'p-3' }, `$${parseFloat(deal.totalProfit || 0).toLocaleString()}`),
+                                        e('td', { className: 'p-3' },
+                                            e('div', { className: 'flex gap-2' },
+                                                e('button', {
+                                                    onClick: () => handleEdit(deal),
+                                                    className: 'text-blue-600 hover:text-blue-800'
+                                                },
+                                                    e(Edit2, { className: 'h-4 w-4' })
+                                                ),
+                                                e('button', {
+                                                    onClick: () => handleDelete(deal.id),
+                                                    className: 'text-red-600 hover:text-red-800'
+                                                },
+                                                    e(Trash2, { className: 'h-4 w-4' })
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+
+            const ArchiveView = () => e('div', { className: 'space-y-6' },
+                e('div', { className: 'flex flex-col sm:flex-row gap-4 items-center justify-between' },
+                    e('h2', { className: 'text-xl font-semibold' }, 'Archive Management'),
+                    e('div', { className: 'flex gap-2' },
+                        e('input', {
+                            type: 'month',
+                            className: 'px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                            onChange: (ev) => {
+                                if (ev.target.value && window.confirm(`Archive all sales from ${ev.target.value}?`)) {
+                                    archiveMonth(ev.target.value);
+                                }
+                            }
+                        })
+                    )
+                ),
+
+                e('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' },
+                    Object.entries(archivedData).map(([month, deals]) =>
+                        e('div', { key: month, className: 'bg-white p-6 rounded-lg border' },
+                            e('div', { className: 'flex items-center justify-between mb-4' },
+                                e('h3', { className: 'font-semibold' }, month),
+                                e(Archive, { className: 'h-5 w-5 text-gray-500' })
+                            ),
+                            e('div', { className: 'space-y-2 text-sm' },
+                                e('p', {}, `Total Deals: ${deals.length}`),
+                                e('p', {}, `Total Revenue: $${deals.reduce((sum, deal) => sum + parseFloat(deal.salePrice || 0), 0).toLocaleString()}`),
+                                e('p', {}, `Total Profit: $${deals.reduce((sum, deal) => sum + parseFloat(deal.totalProfit || 0), 0).toLocaleString()}`)
+                            ),
+                            e('button', {
+                                onClick: () => exportToCSV(deals, `archived-${month}.csv`),
+                                className: 'mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700'
+                            },
+                                'Export Month'
+                            )
+                        )
+                    )
+                )
+            );
+
+            return e('div', { className: 'min-h-screen bg-gray-100' },
+                e('div', { className: 'bg-white shadow-sm border-b' },
+                    e('div', { className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8' },
+                        e('div', { className: 'flex justify-between items-center py-4' },
+                            e('h1', { className: 'text-2xl font-bold text-gray-900' }, 'Buick GMC Sales Tracker'),
+                            e('nav', { className: 'flex space-x-4' },
+                                e('button', {
+                                    onClick: () => setCurrentView('dashboard'),
+                                    className: `px-4 py-2 rounded-lg ${currentView === 'dashboard' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900'}`
+                                }, 'Dashboard'),
+                                e('button', {
+                                    onClick: () => setCurrentView('sales'),
+                                    className: `px-4 py-2 rounded-lg ${currentView === 'sales' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900'}`
+                                }, 'Sales'),
+                                e('button', {
+                                    onClick: () => setCurrentView('archive'),
+                                    className: `px-4 py-2 rounded-lg ${currentView === 'archive' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900'}`
+                                }, 'Archive')
+                            )
+                        )
+                    )
+                ),
+
+                e('div', { className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8' },
+                    currentView === 'dashboard' && e(DashboardView),
+                    currentView === 'sales' && e(SalesView),
+                    currentView === 'archive' && e(ArchiveView)
+                ),
+
+                showAddForm && e('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50' },
+                    e('div', { className: 'bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto' },
+                        e('div', { className: 'p-6' },
+                            e('h2', { className: 'text-xl font-semibold mb-4' },
+                                editingDeal ? 'Edit Deal' : 'Add New Deal'
+                            ),
+                            
+                            e('div', { className: 'space-y-4' },
+                                e('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4' },
+                                    e('div', {},
+                                        e('label', { className: 'block text-sm font-medium mb-1' }, 'Date'),
+                                        e('input', {
+                                            type: 'date',
+                                            value: formData.date,
+                                            onChange: (ev) => setFormData({...formData, date: ev.target.value}),
+                                            className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                                            required: true
+                                        })
+                                    ),
+                                    
+                                    e('div', {},
+                                        e('label', { className: 'block text-sm font-medium mb-1' }, 'Deal Number'),
+                                        e('input', {
+                                            type: 'text',
+                                            value: formData.dealNumber,
+                                            onChange: (ev) => setFormData({...formData, dealNumber: ev.target.value}),
+                                            className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                                            required: true
+                                        })
+                                    ),
+                                    
+                                    e('div', {},
+                                        e('label', { className: 'block text-sm font-medium mb-1' }, 'Make'),
+                                        e('select', {
+                                            value: formData.make,
+                                            onChange: (ev) => setFormData({...formData, make: ev.target.value}),
+                                            className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500'
+                                        },
+                                            e('option', { value: 'Buick' }, 'Buick'),
+                                            e('option', { value: 'GMC' }, 'GMC')
+                                        )
+                                    ),
+                                    
+                                    e('div', {},
+                                        e('label', { className: 'block text-sm font-medium mb-1' }, 'Model'),
+                                        e('input', {
+                                            type: 'text',
+                                            value: formData.model,
+                                            onChange: (ev) => setFormData({...formData, model: ev.target.value}),
+                                            className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                                            required: true
+                                        })
+                                    ),
+                                    
+                                    e('div', {},
+                                        e('label', { className: 'block text-sm font-medium mb-1' }, 'Year'),
+                                        e('input', {
+                                            type: 'number',
+                                            value: formData.year,
+                                            onChange: (ev) => setFormData({...formData, year: parseInt(ev.target.value)}),
+                                            className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                                            min: 2000,
+                                            max: 2030,
+                                            required: true
+                                        })
+                                    ),
+                                    
+                                    e('div', {},
+                                        e('label', { className: 'block text-sm font-medium mb-1' }, 'Customer Name'),
+                                        e('input', {
+                                            type: 'text',
+                                            value: formData.customerName,
+                                            onChange: (ev) => setFormData({...formData, customerName: ev.target.value}),
+                                            className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                                            required: true
+                                        })
+                                    ),
+                                    
+                                    e('div', {},
+                                        e('label', { className: 'block text-sm font-medium mb-1' }, 'Lead Type'),
+                                        e('select', {
+                                            value: formData.leadType,
+                                            onChange: (ev) => setFormData({...formData, leadType: ev.target.value}),
+                                            className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500'
+                                        },
+                                            e('option', { value: 'Walk-in' }, 'Walk-in'),
+                                            e('option', { value: 'Phone' }, 'Phone'),
+                                            e('option', { value: 'Internet' }, 'Internet'),
+                                            e('option', { value: 'Referral' }, 'Referral'),
+                                            e('option', { value: 'Repeat Customer' }, 'Repeat Customer')
+                                        )
+                                    ),
+                                    
+                                    e('div', {},
+                                        e('label', { className: 'block text-sm font-medium mb-1' }, 'Sales Person'),
+                                        e('input', {
+                                            type: 'text',
+                                            value: formData.salesPerson,
+                                            onChange: (ev) => setFormData({...formData, salesPerson: ev.target.value}),
+                                            className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                                            required: true
+                                        })
+                                    ),
+                                    
+                                    e('div', {},
+                                        e('label', { className: 'block text-sm font-medium mb-1' }, 'Sale Price'),
+                                        e('input', {
+                                            type: 'number',
+                                            step: 0.01,
+                                            value: formData.salePrice,
+                                            onChange: (ev) => setFormData({...formData, salePrice: parseFloat(ev.target.value) || 0}),
+                                            className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                                            required: true
+                                        })
+                                    ),
+                                    
+                                    e('div', {},
+                                        e('label', { className: 'block text-sm font-medium mb-1' }, 'Front End Profit'),
+                                        e('input', {
+                                            type: 'number',
+                                            step: 0.01,
+                                            value: formData.frontEndProfit,
+                                            onChange: (ev) => setFormData({...formData, frontEndProfit: parseFloat(ev.target.value) || 0}),
+                                            className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500'
+                                        })
+                                    ),
+                                    
+                                    e('div', {},
+                                        e('label', { className: 'block text-sm font-medium mb-1' }, 'Back End Profit'),
+                                        e('input', {
+                                            type: 'number',
+                                            step: 0.01,
+                                            value: formData.backEndProfit,
+                                            onChange: (ev) => setFormData({...formData, backEndProfit: parseFloat(ev.target.value) || 0}),
+                                            className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500'
+                                        })
+                                    ),
+                                    
+                                    e('div', {},
+                                        e('label', { className: 'block text-sm font-medium mb-1' }, 'Trade In Value'),
+                                        e('input', {
+                                            type: 'number',
+                                            step: 0.01,
+                                            value: formData.tradeInValue,
+                                            onChange: (ev) => setFormData({...formData, tradeInValue: parseFloat(ev.target.value) || 0}),
+                                            className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500'
+                                        })
+                                    )
+                                ),
+                                
+                                e('div', { className: 'grid grid-cols-2 md:grid-cols-4 gap-4' },
+                                    e('label', { className: 'flex items-center space-x-2' },
+                                        e('input', {
+                                            type: 'checkbox',
+                                            checked: formData.tradeIn,
+                                            onChange: (ev) => setFormData({...formData, tradeIn: ev.target.checked}),
+                                            className: 'rounded'
+                                        }),
+                                        e('span', { className: 'text-sm' }, 'Trade In')
+                                    ),
+                                    
+                                    e('label', { className: 'flex items-center space-x-2' },
+                                        e('input', {
+                                            type: 'checkbox',
+                                            checked: formData.financing,
+                                            onChange: (ev) => setFormData({...formData, financing: ev.target.checked}),
+                                            className: 'rounded'
+                                        }),
+                                        e('span', { className: 'text-sm' }, 'Warranty')
+                                    ),
+                                    
+                                    e('label', { className: 'flex items-center space-x-2' },
+                                        e('input', {
+                                            type: 'checkbox',
+                                            checked: formData.warranty,
+                                            onChange: (ev) => setFormData({...formData, warranty: ev.target.checked}),
+                                            className: 'rounded'
+                                        }),
+                                        e('span', { className: 'text-sm' }, 'Financing')
+                                    ),
+                                    
+                                    e('label', { className: 'flex items-center space-x-2' },
+                                        e('input', {
+                                            type: 'checkbox',
+                                            checked: formData.insurance,
+                                            onChange: (ev) => setFormData({...formData, insurance: ev.target.checked}),
+                                            className: 'rounded'
+                                        }),
+                                        e('span', { className: 'text-sm' }, 'Insurance')
+                                    )
+                                ),
+                                
+                                e('div', {},
+                                    e('label', { className: 'block text-sm font-medium mb-1' }, 'Notes'),
+                                    e('textarea', {
+                                        value: formData.notes,
+                                        onChange: (ev) => setFormData({...formData, notes: ev.target.value}),
+                                        rows: 3,
+                                        className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                                        placeholder: 'Additional notes about the deal...'
+                                    })
+                                ),
+                                
+                                e('div', { className: 'flex gap-4 pt-4' },
+                                    e('button', {
+                                        type: 'button',
+                                        onClick: handleSubmit,
+                                        className: 'flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700'
+                                    },
+                                        editingDeal ? 'Update Deal' : 'Save Deal'
+                                    ),
+                                    e('button', {
+                                        type: 'button',
+                                        onClick: () => {
+                                            setShowAddForm(false);
+                                            resetForm();
+                                        },
+                                        className: 'flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400'
+                                    },
+                                        'Cancel'
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+        };
+
+        ReactDOM.render(e(BuickGMCSalesTracker), document.getElementById('root'));
+    </script>
+</body>
+</html>
