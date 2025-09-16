@@ -17,6 +17,7 @@
         // Icon components
         const Plus = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('path', { d: "M5 12h14" }), e('path', { d: "M12 5v14" }));
         const Download = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('path', { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }), e('polyline', { points: "7,10 12,15 17,10" }), e('line', { x1: "12", x2: "12", y1: "15", y2: "3" }));
+        const Upload = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('path', { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }), e('polyline', { points: "17,6 12,1 7,6" }), e('line', { x1: "12", x2: "12", y1: "1", y2: "15" }));
         const Archive = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('rect', { width: "20", height: "5", x: "2", y: "3", rx: "1" }), e('path', { d: "m4 8 16 0v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z" }), e('path', { d: "m10 12 4 0" }));
         const DollarSign = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('line', { x1: "12", x2: "12", y1: "2", y2: "22" }), e('path', { d: "M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" }));
         const Car = (props) => e('svg', { ...props, xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, e('path', { d: "M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18.4 10H5.6L3.5 11.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2" }), e('circle', { cx: "7", cy: "17", r: "2" }), e('path', { d: "M9 17h6" }), e('circle', { cx: "17", cy: "17", r: "2" }));
@@ -59,6 +60,7 @@
             const [formData, setFormData] = useState({
                 date: new Date().toISOString().slice(0, 10),
                 dealNumber: '',
+                stockNumber: '',
                 make: 'Buick',
                 model: '',
                 year: new Date().getFullYear(),
@@ -80,6 +82,7 @@
                 setFormData({
                     date: new Date().toISOString().slice(0, 10),
                     dealNumber: '',
+                    stockNumber: '',
                     make: 'Buick',
                     model: '',
                     year: new Date().getFullYear(),
@@ -157,7 +160,7 @@
 
             const exportToCSV = (data, filename) => {
                 const headers = [
-                    'Date', 'Deal Number', 'Make', 'Model', 'Year', 'Customer Name', 
+                    'Date', 'Deal Number', 'Stock Number', 'Make', 'Model', 'Year', 'Customer Name', 
                     'Lead Type', 'Sales Person', 'Trade In', 'Trade In Value', 
                     'Sale Price', 'Front End Profit', 'Back End Profit', 'Total Profit',
                     'Financing', 'Warranty', 'Insurance', 'Notes'
@@ -168,6 +171,7 @@
                     ...data.map(deal => [
                         deal.date,
                         deal.dealNumber,
+                        deal.stockNumber || '',
                         deal.make,
                         deal.model,
                         deal.year,
@@ -196,10 +200,64 @@
                 URL.revokeObjectURL(url);
             };
 
+            const importFromCSV = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const csv = e.target.result;
+                        const lines = csv.split('\n');
+                        const headers = lines[0].split(',');
+                        
+                        const importedData = lines.slice(1)
+                            .filter(line => line.trim())
+                            .map((line, index) => {
+                                const values = line.split(',');
+                                return {
+                                    id: Date.now() + index,
+                                    date: values[0] || new Date().toISOString().slice(0, 10),
+                                    dealNumber: values[1] || '',
+                                    stockNumber: values[2] || '',
+                                    make: values[3] || 'Buick',
+                                    model: values[4] || '',
+                                    year: parseInt(values[5]) || new Date().getFullYear(),
+                                    customerName: values[6] ? values[6].replace(/"/g, '') : '',
+                                    leadType: values[7] || 'Walk-in',
+                                    salesPerson: values[8] ? values[8].replace(/"/g, '') : '',
+                                    tradeIn: values[9] === 'Yes',
+                                    tradeInValue: parseFloat(values[10]) || 0,
+                                    salePrice: parseFloat(values[11]) || 0,
+                                    frontEndProfit: parseFloat(values[12]) || 0,
+                                    backEndProfit: parseFloat(values[13]) || 0,
+                                    totalProfit: parseFloat(values[14]) || 0,
+                                    financing: values[15] === 'Yes',
+                                    warranty: values[16] === 'Yes',
+                                    insurance: values[17] === 'Yes',
+                                    notes: values[18] ? values[18].replace(/"/g, '') : '',
+                                    createdAt: new Date().toISOString()
+                                };
+                            });
+
+                        if (window.confirm(`Import ${importedData.length} deals? This will add to your existing data.`)) {
+                            setSalesData(prev => [...prev, ...importedData]);
+                            alert(`Successfully imported ${importedData.length} deals!`);
+                        }
+                    } catch (error) {
+                        alert('Error importing CSV. Please check the file format.');
+                        console.error('Import error:', error);
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = ''; // Reset file input
+            };
+
             const filteredSales = salesData.filter(deal => {
                 const matchesSearch = searchTerm === '' || 
                     deal.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     deal.dealNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    deal.stockNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     deal.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     deal.salesPerson.toLowerCase().includes(searchTerm.toLowerCase());
                 
@@ -269,6 +327,7 @@
                                 e('tr', { className: 'border-b' },
                                     e('th', { className: 'text-left p-2' }, 'Date'),
                                     e('th', { className: 'text-left p-2' }, 'Deal #'),
+                                    e('th', { className: 'text-left p-2' }, 'Stock #'),
                                     e('th', { className: 'text-left p-2' }, 'Customer'),
                                     e('th', { className: 'text-left p-2' }, 'Vehicle'),
                                     e('th', { className: 'text-left p-2' }, 'Sales Person'),
@@ -280,6 +339,7 @@
                                     e('tr', { key: deal.id, className: 'border-b' },
                                         e('td', { className: 'p-2' }, new Date(deal.date).toLocaleDateString()),
                                         e('td', { className: 'p-2' }, deal.dealNumber),
+                                        e('td', { className: 'p-2' }, deal.stockNumber || '-'),
                                         e('td', { className: 'p-2' }, deal.customerName),
                                         e('td', { className: 'p-2' }, `${deal.year} ${deal.make} ${deal.model}`),
                                         e('td', { className: 'p-2' }, deal.salesPerson),
@@ -295,12 +355,24 @@
             const SalesView = () => e('div', { className: 'space-y-6' },
                 e('div', { className: 'flex flex-col sm:flex-row gap-4 items-center justify-between' },
                     e('h2', { className: 'text-xl font-semibold' }, 'Sales Management'),
-                    e('button', {
-                        onClick: () => setShowAddForm(true),
-                        className: 'bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700'
-                    },
-                        e(Plus, { className: 'h-4 w-4' }),
-                        'Add New Deal'
+                    e('div', { className: 'flex gap-2' },
+                        e('label', { className: 'bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-700 cursor-pointer' },
+                            e(Upload, { className: 'h-4 w-4' }),
+                            'Import CSV',
+                            e('input', {
+                                type: 'file',
+                                accept: '.csv',
+                                onChange: importFromCSV,
+                                className: 'hidden'
+                            })
+                        ),
+                        e('button', {
+                            onClick: () => setShowAddForm(true),
+                            className: 'bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700'
+                        },
+                            e(Plus, { className: 'h-4 w-4' }),
+                            'Add New Deal'
+                        )
                     )
                 ),
 
@@ -309,7 +381,7 @@
                         e(Search, { className: 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' }),
                         e('input', {
                             type: 'text',
-                            placeholder: 'Search deals...',
+                            placeholder: 'Search deals, stock numbers, customers...',
                             value: searchTerm,
                             onChange: (e) => setSearchTerm(e.target.value),
                             className: 'w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
@@ -337,6 +409,7 @@
                                 e('tr', {},
                                     e('th', { className: 'text-left p-3' }, 'Date'),
                                     e('th', { className: 'text-left p-3' }, 'Deal #'),
+                                    e('th', { className: 'text-left p-3' }, 'Stock #'),
                                     e('th', { className: 'text-left p-3' }, 'Customer'),
                                     e('th', { className: 'text-left p-3' }, 'Vehicle'),
                                     e('th', { className: 'text-left p-3' }, 'Sales Person'),
@@ -350,6 +423,7 @@
                                     e('tr', { key: deal.id, className: 'border-b hover:bg-gray-50' },
                                         e('td', { className: 'p-3' }, new Date(deal.date).toLocaleDateString()),
                                         e('td', { className: 'p-3' }, deal.dealNumber),
+                                        e('td', { className: 'p-3' }, deal.stockNumber || '-'),
                                         e('td', { className: 'p-3' }, deal.customerName),
                                         e('td', { className: 'p-3' }, `${deal.year} ${deal.make} ${deal.model}`),
                                         e('td', { className: 'p-3' }, deal.salesPerson),
@@ -475,6 +549,17 @@
                                             onChange: (ev) => setFormData({...formData, dealNumber: ev.target.value}),
                                             className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
                                             required: true
+                                        })
+                                    ),
+                                    
+                                    e('div', {},
+                                        e('label', { className: 'block text-sm font-medium mb-1' }, 'Stock Number'),
+                                        e('input', {
+                                            type: 'text',
+                                            value: formData.stockNumber,
+                                            onChange: (ev) => setFormData({...formData, stockNumber: ev.target.value}),
+                                            className: 'w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                                            placeholder: 'Optional'
                                         })
                                     ),
                                     
@@ -615,7 +700,7 @@
                                             onChange: (ev) => setFormData({...formData, financing: ev.target.checked}),
                                             className: 'rounded'
                                         }),
-                                        e('span', { className: 'text-sm' }, 'Warranty')
+                                        e('span', { className: 'text-sm' }, 'Financing')
                                     ),
                                     
                                     e('label', { className: 'flex items-center space-x-2' },
@@ -625,7 +710,7 @@
                                             onChange: (ev) => setFormData({...formData, warranty: ev.target.checked}),
                                             className: 'rounded'
                                         }),
-                                        e('span', { className: 'text-sm' }, 'Financing')
+                                        e('span', { className: 'text-sm' }, 'Warranty')
                                     ),
                                     
                                     e('label', { className: 'flex items-center space-x-2' },
