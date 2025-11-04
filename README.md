@@ -10,6 +10,13 @@ A comprehensive sales tracking system for Buick GMC dealerships, built with Goog
 - **📈 Sales Management**: View, edit, and delete sales records
 - **📦 Archive System**: Archive sales by month for better organization
 - **💾 Import/Export**: CSV import and export functionality
+- **📊 Quarterly Analytics**: Advanced quarterly analysis with year-over-year comparisons
+- **🤖 AI-Powered Insights**: Get smart recommendations using Google Gemini AI
+- **💡 Strategic Recommendations**: AI analyzes your data and provides actionable advice
+- **📈 Trend Analysis**: Identify patterns and performance trends
+- **👥 Sales Team Analytics**: Track individual and team performance
+- **🎯 F&I Penetration Analysis**: Monitor financing, warranty, and insurance rates
+- **📄 Document Management**: Upload dealership documents for AI context
 - **🎨 Beautiful UI**: Modern, responsive design using Tailwind CSS
 - **☁️ Cloud Storage**: All data stored in Google Sheets - accessible anywhere
 
@@ -30,15 +37,29 @@ A comprehensive sales tracking system for Buick GMC dealerships, built with Goog
 
 1. **Delete** the default `Code.gs` file content
 
-2. **Copy the contents of `Code.gs`** from this repository and paste it into the Apps Script editor
+2. **Add Code.gs**:
+   - Copy the contents of `Code.gs` from this repository
+   - Paste into the Apps Script editor
 
-3. **Add the HTML file**:
+3. **Add Analytics.gs**:
+   - Click the **+** button next to "Files" in the left sidebar
+   - Select **Script**
+   - Name it `Analytics`
+   - Copy the contents of `Analytics.gs` from this repository and paste it
+
+4. **Add AI_Insights.gs**:
+   - Click the **+** button next to "Files"
+   - Select **Script**
+   - Name it `AI_Insights`
+   - Copy the contents of `AI_Insights.gs` from this repository and paste it
+
+5. **Add the HTML file**:
    - Click the **+** button next to "Files" in the left sidebar
    - Select **HTML**
    - Name it `index`
    - Copy the contents of `index.html` from this repository and paste it
 
-4. **Add the project settings**:
+6. **Add the project settings**:
    - Click on **Project Settings** (gear icon) in the left sidebar
    - Scroll down to "Script Properties"
    - The `appsscript.json` settings are optional but recommended for timezone configuration
@@ -105,6 +126,61 @@ In the **Sales** tab:
 3. Confirm the archive operation
 4. Archived sales are moved to a separate sheet and removed from active sales
 
+### Using Quarterly Analytics
+
+1. Go to the **Quarterly** tab
+2. View performance breakdown by quarter (Q1, Q2, Q3, Q4)
+3. See year-to-date totals and metrics
+4. Compare quarters side-by-side
+5. Click the 💡 icon on any quarter to get AI insights
+6. Use year navigation to view previous years
+7. Each quarter shows:
+   - Total sales count
+   - Revenue and profit
+   - Average profit per sale
+   - Profit margin percentage
+   - Buick vs GMC breakdown
+
+### AI-Powered Insights
+
+The AI Insights feature uses Google Gemini to analyze your sales data and provide strategic recommendations.
+
+**Setup:**
+1. Go to **Settings** tab
+2. Get a free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+3. Enter your API key and save
+4. (Optional) Add dealership context for better insights
+
+**Using AI Insights:**
+1. Go to **AI Insights** tab
+2. Click "Generate Insights" button
+3. Wait for AI analysis (takes 10-30 seconds)
+4. Review detailed recommendations including:
+   - Performance assessment
+   - Specific improvement strategies
+   - F&I penetration opportunities
+   - Sales team training suggestions
+   - Market positioning advice
+
+**Quarterly AI Analysis:**
+1. Go to **Quarterly** tab
+2. Click the 💡 lightbulb icon on any quarter
+3. Get quarter-specific insights and recommendations
+
+### Dealership Context
+
+Improve AI recommendations by providing context about your dealership:
+
+1. Go to **Settings** tab
+2. In "Dealership Context" section, describe:
+   - Location and market size
+   - Dealership size and sales volume goals
+   - Current challenges or focus areas
+   - Special programs or initiatives
+   - Competitive landscape
+3. Click "Save Context"
+4. AI will use this information for more relevant recommendations
+
 ### Importing/Exporting Data
 
 **Export:**
@@ -168,6 +244,58 @@ Update the Buick and GMC model lists in the form (around line 573-578 in index.h
 
 Dashboard metrics are calculated in the `DashboardView` function (around line 279-353 in index.html).
 
+## What AI Insights Can Tell You 🤖
+
+The AI analysis provides:
+
+**Performance Insights:**
+- Whether you're on track for goals
+- Strong and weak performance areas
+- Comparison to typical dealership metrics
+
+**F&I Opportunities:**
+- Which products have low penetration
+- Strategies to improve F&I sales
+- Training focus areas for sales team
+
+**Sales Team Analysis:**
+- Top performer characteristics
+- Coaching opportunities for underperformers
+- Lead source optimization
+
+**Strategic Recommendations:**
+- Specific actions to improve next quarter
+- Inventory and product mix suggestions
+- Marketing and lead generation ideas
+- Pricing and profit optimization tips
+
+**Trend Analysis:**
+- Seasonal patterns
+- Growth or decline indicators
+- Brand performance (Buick vs GMC)
+
+## Advanced Features 🎯
+
+### Quarterly Reports
+
+Export detailed quarterly reports:
+1. Open Apps Script editor
+2. Run `exportQuarterlyReport(year, 'Q1')`
+3. A new sheet will be created with detailed metrics
+
+### Comparative Analysis
+
+Get quarter-over-quarter comparisons:
+- Growth percentages
+- Performance trends
+- Sales velocity changes
+
+### Sales Person Performance
+
+Analyze individual performance:
+1. In Apps Script, run `analyzeSalesPersonPerformance("Name")`
+2. Get detailed individual metrics and AI recommendations
+
 ## Troubleshooting 🔧
 
 ### "Sheet not found" error
@@ -186,6 +314,28 @@ Dashboard metrics are calculated in the `DashboardView` function (around line 27
 - Large datasets may timeout
 - Consider archiving old data
 - Contact support if issue persists
+
+### AI Insights not working
+
+**"API key not configured" error:**
+- Go to Settings tab
+- Add your Gemini API key
+- Get free key at: https://makersuite.google.com/app/apikey
+
+**AI returns generic advice:**
+- Add dealership context in Settings
+- Ensure you have sufficient sales data (at least 10 sales)
+- Try generating insights for completed quarters
+
+**Slow AI response:**
+- Normal processing time is 10-30 seconds
+- Large datasets may take longer
+- Check your internet connection
+
+**API quota exceeded:**
+- Gemini free tier has daily limits
+- Wait 24 hours or upgrade your API plan
+- Monitor usage at Google AI Studio
 
 ## Security & Privacy 🔒
 
