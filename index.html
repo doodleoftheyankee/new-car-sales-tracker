@@ -34,28 +34,52 @@
             const [editingDeal, setEditingDeal] = useState(null);
             const [searchTerm, setSearchTerm] = useState('');
             const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7));
+            const [loading, setLoading] = useState(true);
 
-            // Load data from localStorage on component mount
+            // Load data from Google Sheets on component mount
             useEffect(() => {
-                const savedSales = localStorage.getItem('buickGmcSales');
-                const savedArchived = localStorage.getItem('buickGmcArchived');
-                
-                if (savedSales) {
-                    setSalesData(JSON.parse(savedSales));
-                }
-                if (savedArchived) {
-                    setArchivedData(JSON.parse(savedArchived));
-                }
+                loadAllData();
             }, []);
 
-            // Save data to localStorage whenever salesData or archivedData changes
-            useEffect(() => {
-                localStorage.setItem('buickGmcSales', JSON.stringify(salesData));
-            }, [salesData]);
+            const loadAllData = () => {
+                setLoading(true);
+                let salesLoaded = false;
+                let archiveLoaded = false;
 
-            useEffect(() => {
-                localStorage.setItem('buickGmcArchived', JSON.stringify(archivedData));
-            }, [archivedData]);
+                const checkComplete = () => {
+                    if (salesLoaded && archiveLoaded) {
+                        setLoading(false);
+                    }
+                };
+
+                // Load sales data
+                google.script.run
+                    .withSuccessHandler((data) => {
+                        setSalesData(data || []);
+                        salesLoaded = true;
+                        checkComplete();
+                    })
+                    .withFailureHandler((error) => {
+                        console.error('Error loading sales data:', error);
+                        salesLoaded = true;
+                        checkComplete();
+                    })
+                    .getAllSalesData();
+
+                // Load archived data
+                google.script.run
+                    .withSuccessHandler((data) => {
+                        setArchivedData(data || {});
+                        archiveLoaded = true;
+                        checkComplete();
+                    })
+                    .withFailureHandler((error) => {
+                        console.error('Error loading archived data:', error);
+                        archiveLoaded = true;
+                        checkComplete();
+                    })
+                    .getArchivedMonths();
+            };
 
             const [formData, setFormData] = useState({
                 date: new Date().toISOString().slice(0, 10),
@@ -110,14 +134,24 @@
                     createdAt: editingDeal ? editingDeal.createdAt : new Date().toISOString()
                 };
 
-                if (editingDeal) {
-                    setSalesData(prev => prev.map(deal => deal.id === editingDeal.id ? dealData : deal));
-                } else {
-                    setSalesData(prev => [...prev, dealData]);
-                }
-                
-                resetForm();
-                setShowAddForm(false);
+                // Save to Google Sheets
+                google.script.run
+                    .withSuccessHandler((result) => {
+                        if (result.success) {
+                            // Reload data from server
+                            loadAllData();
+                            resetForm();
+                            setShowAddForm(false);
+                            alert(result.message);
+                        } else {
+                            alert('Error: ' + result.message);
+                        }
+                    })
+                    .withFailureHandler((error) => {
+                        console.error('Error saving sale:', error);
+                        alert('Error saving sale: ' + error.message);
+                    })
+                    .saveSale(dealData);
             };
 
             const handleEdit = (deal) => {
@@ -128,34 +162,38 @@
 
             const handleDelete = (dealId) => {
                 if (window.confirm('Are you sure you want to delete this deal?')) {
-                    setSalesData(prev => prev.filter(deal => deal.id !== dealId));
+                    google.script.run
+                        .withSuccessHandler((result) => {
+                            if (result.success) {
+                                loadAllData();
+                                alert(result.message);
+                            } else {
+                                alert('Error: ' + result.message);
+                            }
+                        })
+                        .withFailureHandler((error) => {
+                            console.error('Error deleting sale:', error);
+                            alert('Error deleting sale: ' + error.message);
+                        })
+                        .deleteSale(dealId);
                 }
             };
 
             const archiveMonth = (monthYear) => {
-                const [year, month] = monthYear.split('-');
-                const monthData = salesData.filter(deal => {
-                    const dealDate = new Date(deal.date);
-                    return dealDate.getFullYear() === parseInt(year) && 
-                           dealDate.getMonth() === parseInt(month) - 1;
-                });
-                
-                if (monthData.length > 0) {
-                    setArchivedData(prev => ({
-                        ...prev,
-                        [monthYear]: monthData
-                    }));
-                    
-                    setSalesData(prev => prev.filter(deal => {
-                        const dealDate = new Date(deal.date);
-                        return !(dealDate.getFullYear() === parseInt(year) && 
-                                dealDate.getMonth() === parseInt(month) - 1);
-                    }));
-                    
-                    alert(`Archived ${monthData.length} deals from ${monthYear}`);
-                } else {
-                    alert('No deals found for this month');
-                }
+                google.script.run
+                    .withSuccessHandler((result) => {
+                        if (result.success) {
+                            loadAllData();
+                            alert(result.message);
+                        } else {
+                            alert('Error: ' + result.message);
+                        }
+                    })
+                    .withFailureHandler((error) => {
+                        console.error('Error archiving month:', error);
+                        alert('Error archiving month: ' + error.message);
+                    })
+                    .archiveMonth(monthYear);
             };
 
             const exportToCSV = (data, filename) => {
@@ -207,45 +245,26 @@
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     try {
-                        const csv = e.target.result;
-                        const lines = csv.split('\n');
-                        const headers = lines[0].split(',');
-                        
-                        const importedData = lines.slice(1)
-                            .filter(line => line.trim())
-                            .map((line, index) => {
-                                const values = line.split(',');
-                                return {
-                                    id: Date.now() + index,
-                                    date: values[0] || new Date().toISOString().slice(0, 10),
-                                    dealNumber: values[1] || '',
-                                    stockNumber: values[2] || '',
-                                    make: values[3] || 'Buick',
-                                    model: values[4] || '',
-                                    year: parseInt(values[5]) || new Date().getFullYear(),
-                                    customerName: values[6] ? values[6].replace(/"/g, '') : '',
-                                    leadType: values[7] || 'Walk-in',
-                                    salesPerson: values[8] ? values[8].replace(/"/g, '') : '',
-                                    tradeIn: values[9] === 'Yes',
-                                    tradeInValue: parseFloat(values[10]) || 0,
-                                    salePrice: parseFloat(values[11]) || 0,
-                                    frontEndProfit: parseFloat(values[12]) || 0,
-                                    backEndProfit: parseFloat(values[13]) || 0,
-                                    totalProfit: parseFloat(values[14]) || 0,
-                                    financing: values[15] === 'Yes',
-                                    warranty: values[16] === 'Yes',
-                                    insurance: values[17] === 'Yes',
-                                    notes: values[18] ? values[18].replace(/"/g, '') : '',
-                                    createdAt: new Date().toISOString()
-                                };
-                            });
+                        const csvContent = e.target.result;
 
-                        if (window.confirm(`Import ${importedData.length} deals? This will add to your existing data.`)) {
-                            setSalesData(prev => [...prev, ...importedData]);
-                            alert(`Successfully imported ${importedData.length} deals!`);
-                        }
+                        // Send CSV content to backend for processing
+                        google.script.run
+                            .withSuccessHandler((result) => {
+                                if (result.success) {
+                                    loadAllData();
+                                    alert(result.message);
+                                } else {
+                                    alert('Error: ' + result.message);
+                                }
+                            })
+                            .withFailureHandler((error) => {
+                                console.error('Error importing CSV:', error);
+                                alert('Error importing CSV: ' + error.message);
+                            })
+                            .importFromCSV(csvContent);
+
                     } catch (error) {
-                        alert('Error importing CSV. Please check the file format.');
+                        alert('Error reading CSV file. Please check the file format.');
                         console.error('Import error:', error);
                     }
                 };
@@ -491,6 +510,17 @@
                     )
                 )
             );
+
+            // Show loading indicator
+            if (loading) {
+                return e('div', { className: 'min-h-screen bg-gray-100 flex items-center justify-center' },
+                    e('div', { className: 'text-center' },
+                        e('div', { className: 'text-4xl mb-4' }, '🔄'),
+                        e('p', { className: 'text-xl font-semibold text-gray-700' }, 'Loading Sales Tracker...'),
+                        e('p', { className: 'text-sm text-gray-500 mt-2' }, 'Please wait while we fetch your data from Google Sheets')
+                    )
+                );
+            }
 
             return e('div', { className: 'min-h-screen bg-gray-100' },
                 e('div', { className: 'bg-white shadow-sm border-b' },
