@@ -11,8 +11,15 @@ const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/
  * Get or set Gemini API Key
  */
 function setGeminiApiKey(apiKey) {
-  PropertiesService.getScriptProperties().setProperty(GEMINI_API_KEY_PROPERTY, apiKey);
-  return { success: true, message: 'API key saved successfully' };
+  try {
+    if (!apiKey || apiKey.trim() === '') {
+      return { success: false, message: 'API key cannot be empty' };
+    }
+    PropertiesService.getScriptProperties().setProperty(GEMINI_API_KEY_PROPERTY, apiKey.trim());
+    return { success: true, message: 'API key saved successfully' };
+  } catch (error) {
+    return { success: false, message: 'Error saving API key: ' + error.toString() };
+  }
 }
 
 function getGeminiApiKey() {
